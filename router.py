@@ -77,9 +77,11 @@ def three_user_items(user_id: int, session: Session = Depends(get_db)):
 
     if len(user.items) >= 3:
         return {
-            "Selected User": f"{user.name} {user.surname} {user.age}",
-            "first 3 items": f"{user.name} have {user.items[0].name, user.items[1].name, user.items[2].name}"
+            "Selected User": {
+                "Name": user.name,
+                "Surname": user.surname,
+                "Age": user.age
+            },
+            "first 3 items": f"{items[0].name} {items[1].name} {items[2].name}"
         }
-    return {
-        "message": "User has less then 3 items"
-    }
+    return {"message": "User has less then 3 items"}
