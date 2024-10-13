@@ -10,3 +10,8 @@ class CreateInfo(BaseModel):
     name: str
     surname: str
     age: int
+
+
+class CreateItem(BaseModel):
+    name: str
+    user_id: int
