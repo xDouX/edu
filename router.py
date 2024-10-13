@@ -1,8 +1,5 @@
 from fastapi import APIRouter, Depends
 from random import randint
-
-from sqlalchemy import select
-
 from schemas import TrainSchema, CreateInfo, CreateItem
 from database import get_db, Session
 from models import UserOrm, ItemsOrm
