@@ -1,5 +1,8 @@
 from fastapi import APIRouter, Depends
 from random import randint
+
+from sqlalchemy import update
+
 from schemas import TrainSchema, CreateInfo, CreateItem
 from database import get_db, Session
 from models import UserOrm, ItemsOrm
@@ -59,7 +62,12 @@ def delete_info(user_id: int, session: Session = Depends(get_db)):
 
 @api_router.post("/items")
 def create_item(give_item: CreateItem, session: Session = Depends(get_db)):
-    new_item = ItemsOrm(name=give_item.name, user_id=give_item.user_id)
+    new_item = (ItemsOrm(
+        name=give_item.name,
+        weight=give_item.weight,
+        description=give_item.description,
+        user_id=give_item.user_id
+    ))
     session.add(new_item)
     session.commit()
     session.refresh(new_item)
@@ -79,6 +87,33 @@ def three_user_items(user_id: int, session: Session = Depends(get_db)):
                 "Surname": user.surname,
                 "Age": user.age
             },
-            "first 3 items": f"{items[0].name} {items[1].name} {items[2].name}"
+            "first 3 items": {
+                "item 1": {
+                    "item name": items[0].name,
+                    "items weight": items[0].weight,
+                    "items description": items[0].description
+                },
+                "item 2": {
+                    "item name": items[1].name,
+                    "items weight": items[1].weight,
+                    "items description": items[1].description
+                },
+                "item 3": {
+                    "item name": items[2].name,
+                    "items weight": items[2].weight,
+                    "items description": items[2].description
+                },
+            }
         }
     return {"message": "User has less then 3 items"}
+
+
+@api_router.post("/trade_items")
+def trade_items(items_id: int, transfer_to_user: int, session: Session = Depends(get_db)):
+    stmt = update(ItemsOrm).values(user_id=transfer_to_user).filter_by(id=items_id)
+    session.execute(stmt)
+    session.commit()
+    res = session.get(UserOrm, {"id": transfer_to_user})
+    return {
+        "Items": res.items
+    }

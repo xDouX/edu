@@ -14,4 +14,6 @@ class CreateInfo(BaseModel):
 
 class CreateItem(BaseModel):
     name: str
+    weight: float
+    description: str
     user_id: int

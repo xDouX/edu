@@ -19,5 +19,7 @@ class ItemsOrm(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]
+    weight: Mapped[float]
+    description: Mapped[str]
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     user: Mapped["UserOrm"] = relationship(back_populates="items")
