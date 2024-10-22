@@ -25,11 +25,13 @@ def get_info_by_group(group: str, session: Session = Depends(get_db)):
     return {
         "group_name": work_group.name,
         "users": [
-            {"id": user.id,
-             "name": user.name,
-             "surname": user.surname,
-             "age": user.age,
-             "items": user.items}
+            {
+                "id": user.id,
+                "name": user.name,
+                "surname": user.surname,
+                "age": user.age,
+                "items": user.items
+            }
             for user in work_group.users
         ]
     }
@@ -120,12 +122,31 @@ def three_user_items(user_id: int, session: Session = Depends(get_db)):
     return {"message": "User has less then 3 items"}
 
 
-@api_router.post("/trade_items")
+@api_router.patch("/trade_items")
 def trade_items(items_id: int, transfer_to_user: int, session: Session = Depends(get_db)):
-    stmt = update(ItemsOrm).values(users_id=transfer_to_user).filter_by(id=items_id)
+    stmt = (
+        update(ItemsOrm).
+        values(users_id=transfer_to_user).
+        filter_by(id=items_id)
+    )
     session.execute(stmt)
     session.commit()
     res = session.get(UserOrm, {"id": transfer_to_user})
     return {
         "Items": res.items.name
     }
+
+
+@api_router.patch("/patch_items")
+def patch_items(item_id: int, item_name: str, session: Session = Depends(get_db)):
+    stmt = (
+        update(ItemsOrm).
+        values(name=item_name).
+        filter_by(id=item_id)
+    )
+    session.execute(stmt)
+    session.commit()
+    return {
+        "message": "Success"
+    }
+
