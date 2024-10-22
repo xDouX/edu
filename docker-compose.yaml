@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: fast_api_project
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - back_data:/project_data/fastapiproject
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@db:5432/${DB_NAME}
+    ports:
+      - "8002:8000"
+  db:
+    container_name: api_postgres
+    image: postgres
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  back_data:
+  db_data:

@@ -1,36 +1,48 @@
 from fastapi import APIRouter, Depends
-from random import randint
 
 from sqlalchemy import update
 
-from schemas import TrainSchema, CreateInfo, CreateItem
+from schemas import CreateInfo, CreateItem
 from database import get_db, Session
-from models import UserOrm, ItemsOrm
+from models import UserOrm, ItemsOrm, WorkGroup
 
 api_router = APIRouter()
 
 
-@api_router.get("/hello")
-def hello():
-    return {"name": "Danil"}
+@api_router.post("/group")
+def create_group(group_name: str, session: Session = Depends(get_db)):
+    new_group = WorkGroup(name=group_name)
+    session.add(new_group)
+    session.commit()
+
+    return {"message": "Success"}
 
 
-@api_router.get("/random")
-def random():
-    return randint(1, 1000)
-
-
-@api_router.post("/styled")
-def styled(input_data: TrainSchema):
-    first_name = input_data.first_row
-    second_name = input_data.second_row
-
-    return {"new_row": f"first string {first_name} + second string {second_name} = {first_name + second_name}"}
+@api_router.get("/get_group_info")
+def get_info_by_group(group: str, session: Session = Depends(get_db)):
+    work_group = session.get(WorkGroup, {"name": group})
+    print(work_group.users)
+    return {
+        "group_name": work_group.name,
+        "users": [
+            {"id": user.id,
+             "name": user.name,
+             "surname": user.surname,
+             "age": user.age,
+             "items": user.items}
+            for user in work_group.users
+        ]
+    }
 
 
 @api_router.post("/info")
 def create_info(input_info: CreateInfo, session: Session = Depends(get_db)):
-    new_info = UserOrm(name=input_info.name, surname=input_info.surname, age=input_info.age)
+    new_info = UserOrm(
+        name=input_info.name,
+        surname=input_info.surname,
+        age=input_info.age,
+        user_group=input_info.user_group
+    )
     session.add(new_info)
     session.commit()
     session.refresh(new_info)
@@ -40,7 +52,7 @@ def create_info(input_info: CreateInfo, session: Session = Depends(get_db)):
 
 @api_router.get("/get_info/{get_name}")
 def get_info(user_id: int, session: Session = Depends(get_db)):
-    query = session.get(UserOrm, {"name": user_id})
+    query = session.get(UserOrm, {"id": user_id})
 
     return {
         "name": query.name,
@@ -66,13 +78,13 @@ def create_item(give_item: CreateItem, session: Session = Depends(get_db)):
         name=give_item.name,
         weight=give_item.weight,
         description=give_item.description,
-        user_id=give_item.user_id
+        users_id=give_item.users_id
     ))
     session.add(new_item)
     session.commit()
     session.refresh(new_item)
 
-    return {"message": f"Item '{new_item.name}' inserted successfully to User with id '{new_item.user_id}'"}
+    return {"message": f"Item '{new_item.name}' inserted successfully to User with id '{new_item.users_id}'"}
 
 
 @api_router.get("/user_items/{user_name}")
@@ -110,10 +122,10 @@ def three_user_items(user_id: int, session: Session = Depends(get_db)):
 
 @api_router.post("/trade_items")
 def trade_items(items_id: int, transfer_to_user: int, session: Session = Depends(get_db)):
-    stmt = update(ItemsOrm).values(user_id=transfer_to_user).filter_by(id=items_id)
+    stmt = update(ItemsOrm).values(users_id=transfer_to_user).filter_by(id=items_id)
     session.execute(stmt)
     session.commit()
     res = session.get(UserOrm, {"id": transfer_to_user})
     return {
-        "Items": res.items
+        "Items": res.items.name
     }
